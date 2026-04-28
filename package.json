@@ -1,0 +1,16 @@
+{
+  "name": "model-release-app",
+  "version": "1.0.0",
+  "description": "Mobile Model Release mit Signature-Pad und Notion-Integration",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.14"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
