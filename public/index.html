@@ -9,27 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --primary: #3d3630;
-            --accent: #8a7e72;
-            --accent-hover: #746859;
-            --bg: #f0ebe4;
-            --card: #faf7f4;
-            --text: #3d3630;
-            --text-light: #9a8e82;
-            --border: #d9d0c7;
-            --success: #7a9e7e;
-            --radius: 12px;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            min-height: 100dvh;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+        :root { --primary: #3d3630; --accent: #8a7e72; --accent-hover: #746859; --bg: #f0ebe4; --card: #faf7f4; --text: #3d3630; --text-light: #9a8e82; --border: #d9d0c7; --success: #7a9e7e; --radius: 12px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; min-height: 100dvh; padding: 0; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 480px; margin: 0 auto; padding: 24px 16px; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
         .header { text-align: center; margin-bottom: 24px; }
         .header h1 { font-size: 1.4rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
@@ -75,21 +56,55 @@
 </head>
 <body>
 <div class="container">
-    <div class="header"><h1>Model Release</h1><p>Rebekka Schnell Fotografie</p></div>
+    <div class="header">
+        <h1>Model Release</h1>
+        <p>Rebekka Schnell Fotografie</p>
+    </div>
     <form class="form-card" id="releaseForm" novalidate>
         <div class="row">
-            <div class="field"><label for="name">Vollst. Name</label><input type="text" id="name" name="name" required placeholder="Max Mustermann" autocomplete="name"></div>
-            <div class="field"><label for="datum">Datum</label><input type="date" id="datum" name="datum" required></div>
+            <div class="field">
+                <label for="name">Vollst. Name</label>
+                <input type="text" id="name" name="name" required placeholder="Max Mustermann" autocomplete="name">
+            </div>
+            <div class="field">
+                <label for="datum">Datum</label>
+                <input type="date" id="datum" name="datum" required>
+            </div>
         </div>
-        <div class="field"><label for="bildinfo">Bildverwendung / Event</label><textarea id="bildinfo" name="bildinfo" placeholder="z.B. Website, Social Media, Portfolio — Shooting Innenstadt"></textarea></div>
-        <div class="field"><label for="referenz">Foto-Referenz (optional)</label><input type="text" id="referenz" name="referenz" placeholder="z.B. IMG_2024, Shooting #12"></div>
+        <div class="field">
+            <label for="bildinfo">Bildverwendung / Event</label>
+            <textarea id="bildinfo" name="bildinfo" placeholder="z.B. Website, Social Media, Portfolio — Shooting Innenstadt"></textarea>
+        </div>
+        <div class="field">
+            <label for="referenz">Foto-Referenz (optional)</label>
+            <input type="text" id="referenz" name="referenz" placeholder="z.B. IMG_2024, Shooting #12">
+        </div>
+        <div class="row">
+            <div class="field">
+                <label for="email">E-Mail (optional)</label>
+                <input type="email" id="email" name="email" placeholder="name@beispiel.de" autocomplete="email">
+            </div>
+            <div class="field">
+                <label for="instagram">Instagram (optional)</label>
+                <input type="text" id="instagram" name="instagram" placeholder="@benutzername">
+            </div>
+        </div>
         <div class="signature-section">
-            <div class="signature-header"><label>Unterschrift</label><button type="button" class="btn-clear" id="clearBtn">Zurücksetzen</button></div>
-            <div class="canvas-wrapper" id="canvasWrapper"><canvas id="signatureCanvas"></canvas><span class="canvas-placeholder" id="placeholder">Hier unterschreiben</span></div>
+            <div class="signature-header">
+                <label>Unterschrift</label>
+                <button type="button" class="btn-clear" id="clearBtn">Zurücksetzen</button>
+            </div>
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="signatureCanvas"></canvas>
+                <span class="canvas-placeholder" id="placeholder">Hier unterschreiben</span>
+            </div>
         </div>
         <div class="legal">Ich erteile hiermit die Erlaubnis, die im Rahmen des oben genannten Shootings erstellten Fotos für die angegebenen Zwecke zu verwenden. Diese Freigabe kann jederzeit schriftlich widerrufen werden.</div>
         <div class="error-msg" id="errorMsg"></div>
-        <button type="submit" class="btn-submit" id="submitBtn"><span class="btn-text">Freigabe absenden</span><div class="spinner"></div></button>
+        <button type="submit" class="btn-submit" id="submitBtn">
+            <span class="btn-text">Freigabe absenden</span>
+            <div class="spinner"></div>
+        </button>
     </form>
 </div>
 <div class="success-overlay" id="successOverlay">
@@ -100,110 +115,100 @@
     <button class="btn-new" id="newBtn">Neue Freigabe</button>
 </div>
 <script>
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('datum').value = today;
-    const canvas = document.getElementById('signatureCanvas');
-    const ctx = canvas.getContext('2d');
-    const wrapper = document.getElementById('canvasWrapper');
-    const placeholder = document.getElementById('placeholder');
-    let isDrawing = false, hasSignature = false;
-    function resizeCanvas() {
-        const rect = wrapper.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr); ctx.strokeStyle = '#3d3630'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('datum').value = today;
+const canvas = document.getElementById('signatureCanvas');
+const ctx = canvas.getContext('2d');
+const wrapper = document.getElementById('canvasWrapper');
+const placeholder = document.getElementById('placeholder');
+let isDrawing = false, hasSignature = false;
+function resizeCanvas() { const rect = wrapper.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; canvas.width = rect.width * dpr; canvas.height = rect.height * dpr; ctx.scale(dpr, dpr); ctx.strokeStyle = '#3d3630'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
+resizeCanvas();
+window.addEventListener('resize', () => { if (!hasSignature) resizeCanvas(); });
+function getPos(e) { const rect = canvas.getBoundingClientRect(); const touch = e.touches ? e.touches[0] : e; return { x: touch.clientX - rect.left, y: touch.clientY - rect.top }; }
+function startDraw(e) { e.preventDefault(); isDrawing = true; hasSignature = true; placeholder.classList.add('hidden'); const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); }
+function draw(e) { if (!isDrawing) return; e.preventDefault(); const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
+function endDraw(e) { if (!isDrawing) return; e.preventDefault(); isDrawing = false; }
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', endDraw);
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+document.getElementById('clearBtn').addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); hasSignature = false; placeholder.classList.remove('hidden'); });
+let lastSubmission = null;
+function generatePDF() {
+    if (!lastSubmission) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 25, contentW = pageW - 2 * margin;
+    let y = 30;
+    doc.setDrawColor(61, 54, 48); doc.setLineWidth(0.5); doc.line(margin, y, pageW - margin, y); y += 10;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(61, 54, 48);
+    doc.text('Model Release', pageW / 2, y, { align: 'center' }); y += 8;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(138, 126, 114);
+    doc.text('Rebekka Schnell Fotografie', pageW / 2, y, { align: 'center' }); y += 6;
+    doc.setDrawColor(61, 54, 48); doc.setLineWidth(0.5); doc.line(margin, y, pageW - margin, y); y += 16;
+    function addField(label, value) { doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(138, 126, 114); doc.text(label.toUpperCase(), margin, y); y += 6; doc.setFont('helvetica', 'normal'); doc.setFontSize(12); doc.setTextColor(61, 54, 48); const lines = doc.splitTextToSize(value || '—', contentW); doc.text(lines, margin, y); y += lines.length * 6 + 8; }
+    addField('Vollständiger Name', lastSubmission.name);
+    const dp = lastSubmission.datum.split('-');
+    addField('Datum', dp.length === 3 ? dp[2]+'.'+dp[1]+'.'+dp[0] : lastSubmission.datum);
+    addField('Bildverwendung / Event', lastSubmission.bildinfo);
+    if (lastSubmission.referenz) addField('Foto-Referenz', lastSubmission.referenz);
+    if (lastSubmission.email || lastSubmission.instagram) {
+        const k = [lastSubmission.email ? 'E-Mail: '+lastSubmission.email : '', lastSubmission.instagram ? 'Instagram: '+lastSubmission.instagram : ''].filter(Boolean).join('  |  ');
+        addField('Kontakt', k);
     }
-    resizeCanvas();
-    window.addEventListener('resize', () => { if (!hasSignature) resizeCanvas(); });
-    function getPos(e) { const rect = canvas.getBoundingClientRect(); const touch = e.touches ? e.touches[0] : e; return { x: touch.clientX - rect.left, y: touch.clientY - rect.top }; }
-    function startDraw(e) { e.preventDefault(); isDrawing = true; hasSignature = true; placeholder.classList.add('hidden'); const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); }
-    function draw(e) { if (!isDrawing) return; e.preventDefault(); const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
-    function endDraw(e) { if (!isDrawing) return; e.preventDefault(); isDrawing = false; }
-    canvas.addEventListener('touchstart', startDraw, { passive: false });
-    canvas.addEventListener('touchmove', draw, { passive: false });
-    canvas.addEventListener('touchend', endDraw);
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', endDraw);
-    canvas.addEventListener('mouseleave', endDraw);
-    document.getElementById('clearBtn').addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); hasSignature = false; placeholder.classList.remove('hidden'); });
-
-    let lastSubmission = null;
-
-    function generatePDF() {
-        if (!lastSubmission) return;
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-        const pageW = doc.internal.pageSize.getWidth();
-        const margin = 25, contentW = pageW - 2 * margin;
-        let y = 30;
-        doc.setDrawColor(61, 54, 48); doc.setLineWidth(0.5); doc.line(margin, y, pageW - margin, y); y += 10;
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(61, 54, 48);
-        doc.text('Model Release', pageW / 2, y, { align: 'center' }); y += 8;
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(138, 126, 114);
-        doc.text('Rebekka Schnell Fotografie', pageW / 2, y, { align: 'center' }); y += 6;
-        doc.setDrawColor(61, 54, 48); doc.setLineWidth(0.5); doc.line(margin, y, pageW - margin, y); y += 16;
-        function addField(label, value) {
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(138, 126, 114);
-            doc.text(label.toUpperCase(), margin, y); y += 6;
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(12); doc.setTextColor(61, 54, 48);
-            const lines = doc.splitTextToSize(value || '\u2014', contentW);
-            doc.text(lines, margin, y); y += lines.length * 6 + 8;
-        }
-        addField('Vollst\u00e4ndiger Name', lastSubmission.name);
-        const dp = lastSubmission.datum.split('-');
-        addField('Datum', dp.length === 3 ? dp[2]+'.'+dp[1]+'.'+dp[0] : lastSubmission.datum);
-        addField('Bildverwendung / Event', lastSubmission.bildinfo);
-        if (lastSubmission.referenz) addField('Foto-Referenz', lastSubmission.referenz);
-        y += 4;
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(138, 126, 114);
-        doc.text('UNTERSCHRIFT', margin, y); y += 4;
-        doc.setDrawColor(217, 208, 199); doc.setLineWidth(0.3); doc.roundedRect(margin, y, contentW, 40, 2, 2);
-        try { doc.addImage(lastSubmission.signature, 'PNG', margin + 5, y + 2, contentW - 10, 36); } catch(e) {}
-        y += 48;
-        y += 4;
-        doc.setFillColor(240, 235, 228); doc.roundedRect(margin, y, contentW, 24, 2, 2, 'F');
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(138, 126, 114);
-        const lt = 'Ich erteile hiermit die Erlaubnis, die im Rahmen des oben genannten Shootings erstellten Fotos f\u00fcr die angegebenen Zwecke zu verwenden. Diese Freigabe kann jederzeit schriftlich widerrufen werden.';
-        doc.text(doc.splitTextToSize(lt, contentW - 10), margin + 5, y + 7); y += 32;
-        doc.setFontSize(7); doc.setTextColor(180, 170, 160);
-        const now = new Date();
-        doc.text('Erstellt am ' + now.toLocaleDateString('de-DE') + ' um ' + now.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}) + ' Uhr', pageW/2, y, {align:'center'});
-        const fy = doc.internal.pageSize.getHeight() - 15;
-        doc.setDrawColor(217, 208, 199); doc.setLineWidth(0.3); doc.line(margin, fy, pageW - margin, fy);
-        doc.setFontSize(7); doc.setTextColor(180, 170, 160);
-        doc.text('Rebekka Schnell Fotografie \u2014 Model Release Nachweis', pageW/2, fy + 5, {align:'center'});
-        doc.save('Model-Release_' + lastSubmission.name.replace(/\s+/g, '-') + '_' + lastSubmission.datum + '.pdf');
-    }
-
-    const form = document.getElementById('releaseForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const errorMsg = document.getElementById('errorMsg');
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault(); errorMsg.classList.remove('visible');
-        const name = document.getElementById('name').value.trim();
-        const datum = document.getElementById('datum').value;
-        const bildinfo = document.getElementById('bildinfo').value.trim();
-        const referenz = document.getElementById('referenz').value.trim();
-        if (!name) { showError('Bitte Namen eingeben.'); return; }
-        if (!hasSignature) { showError('Bitte unterschreiben.'); return; }
-        const signatureData = canvas.toDataURL('image/png');
-        lastSubmission = { name, datum, bildinfo, referenz, signature: signatureData };
-        submitBtn.disabled = true; submitBtn.classList.add('loading');
-        try {
-            const res = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, datum, bildinfo, referenz, signature: signatureData }) });
-            if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.error || 'Fehler beim Speichern'); }
-            document.getElementById('successOverlay').classList.add('visible');
-        } catch (err) { showError(err.message || 'Verbindungsfehler. Bitte erneut versuchen.'); }
-        finally { submitBtn.disabled = false; submitBtn.classList.remove('loading'); }
-    });
-    function showError(msg) { errorMsg.textContent = msg; errorMsg.classList.add('visible'); setTimeout(() => errorMsg.classList.remove('visible'), 4000); }
-    document.getElementById('downloadBtn').addEventListener('click', generatePDF);
-    document.getElementById('newBtn').addEventListener('click', () => {
-        document.getElementById('successOverlay').classList.remove('visible');
-        form.reset(); document.getElementById('datum').value = today;
-        ctx.clearRect(0, 0, canvas.width, canvas.height); hasSignature = false; placeholder.classList.remove('hidden'); lastSubmission = null;
-    });
+    y += 4;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(138, 126, 114); doc.text('UNTERSCHRIFT', margin, y); y += 4;
+    doc.setDrawColor(217, 208, 199); doc.setLineWidth(0.3); doc.roundedRect(margin, y, contentW, 40, 2, 2);
+    try { doc.addImage(lastSubmission.signature, 'PNG', margin + 5, y + 2, contentW - 10, 36); } catch (e) { doc.setFontSize(10); doc.setTextColor(180, 180, 180); doc.text('Unterschrift konnte nicht geladen werden', margin + 10, y + 22); }
+    y += 48; y += 4;
+    doc.setFillColor(240, 235, 228); doc.roundedRect(margin, y, contentW, 24, 2, 2, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(138, 126, 114);
+    const lt = 'Ich erteile hiermit die Erlaubnis, die im Rahmen des oben genannten Shootings erstellten Fotos für die angegebenen Zwecke zu verwenden. Diese Freigabe kann jederzeit schriftlich widerrufen werden.';
+    doc.text(doc.splitTextToSize(lt, contentW - 10), margin + 5, y + 7); y += 32;
+    doc.setFontSize(7); doc.setTextColor(180, 170, 160);
+    const now = new Date();
+    doc.text('Erstellt am '+now.toLocaleDateString('de-DE')+' um '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr', pageW/2, y, {align:'center'});
+    const fY = doc.internal.pageSize.getHeight() - 15;
+    doc.setDrawColor(217, 208, 199); doc.setLineWidth(0.3); doc.line(margin, fY, pageW-margin, fY);
+    doc.setFontSize(7); doc.setTextColor(180, 170, 160);
+    doc.text('Rebekka Schnell Fotografie — Model Release Nachweis', pageW/2, fY+5, {align:'center'});
+    doc.save('Model-Release_'+lastSubmission.name.replace(/\s+/g,'-')+'_'+lastSubmission.datum+'.pdf');
+}
+const form = document.getElementById('releaseForm');
+const submitBtn = document.getElementById('submitBtn');
+const errorMsg = document.getElementById('errorMsg');
+form.addEventListener('submit', async (e) => {
+    e.preventDefault(); errorMsg.classList.remove('visible');
+    const name = document.getElementById('name').value.trim();
+    const datum = document.getElementById('datum').value;
+    const bildinfo = document.getElementById('bildinfo').value.trim();
+    const referenz = document.getElementById('referenz').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const instagram = document.getElementById('instagram').value.trim();
+    if (!name) { showError('Bitte Namen eingeben.'); return; }
+    if (!hasSignature) { showError('Bitte unterschreiben.'); return; }
+    const signatureData = canvas.toDataURL('image/png');
+    lastSubmission = { name, datum, bildinfo, referenz, email, instagram, signature: signatureData };
+    submitBtn.disabled = true; submitBtn.classList.add('loading');
+    try {
+        const res = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, datum, bildinfo, referenz, email, instagram, signature: signatureData }) });
+        if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.error || 'Fehler beim Speichern'); }
+        document.getElementById('successOverlay').classList.add('visible');
+    } catch (err) { showError(err.message || 'Verbindungsfehler. Bitte erneut versuchen.'); }
+    finally { submitBtn.disabled = false; submitBtn.classList.remove('loading'); }
+});
+function showError(msg) { errorMsg.textContent = msg; errorMsg.classList.add('visible'); setTimeout(() => errorMsg.classList.remove('visible'), 4000); }
+document.getElementById('downloadBtn').addEventListener('click', generatePDF);
+document.getElementById('newBtn').addEventListener('click', () => {
+    document.getElementById('successOverlay').classList.remove('visible');
+    form.reset(); document.getElementById('datum').value = today;
+    ctx.clearRect(0, 0, canvas.width, canvas.height); hasSignature = false; placeholder.classList.remove('hidden'); lastSubmission = null;
+});
 </script>
 </body>
 </html>
